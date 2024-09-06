@@ -12,13 +12,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
-import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,11 +26,15 @@ import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.contact.ui.theme.ContactTheme
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+
 data class Contact(var name: String, var phoneNumber: String)
+val _contacts by mutableStateOf(mutableListOf<Contact>())
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,7 +42,19 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ContactTheme {
-                MainScreen1()
+                val viewModel = ViewModelProvider(this).get(ContactViewModel::class.java)
+                val contacts = viewModel.getContacts()
+                Column(modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    viewModel.addContacts("John Doe", "123-456-7890")
+                    viewModel.addContacts("Jane Smith", "987-654-3210")
+                    viewModel.addContacts("Bob Johnson", "555-555-5555")
+                    Log.d("list", contacts.toString())
+
+                    DisplayList(contacts)
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -51,7 +63,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Button(onClick = {//callback
                         //todo smt
-                        val intent = Intent(this@MainActivity, addContact::class.java)\
+                        val intent = Intent(this@MainActivity, addContact::class.java)
                         intent.putExtra("name", "John Doe")
                         startActivity(intent)
 
@@ -65,18 +77,12 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun MainScreen1(){
-
-    Column(modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        val contacts = remember { mutableStateListOf<Contact>()}
-        contacts.add(Contact("John Doe", "123-456-7890"))
-        contacts.add(Contact("Jane Smith", "987-654-3210"))
-        contacts.add(Contact("Bob Johnson", "555-555-5555"))
-        DisplayList(contacts)
+class ContactViewModel : ViewModel() {
+    fun getContacts(): MutableList<Contact> {
+        return _contacts
+    }
+    fun addContacts(name: String, phoneNumber: String)  {
+        _contacts.add(Contact(name, phoneNumber))
     }
 }
 
@@ -94,15 +100,6 @@ fun GreetingPreview() {
     ContactTheme {
         Greeting("Android")
     }
-}
-
-fun addToList(name: String, phoneNumber: String) {
-    addToList(contacts, name, phoneNumber)
-}
-
-fun addToList(contacts: MutableList<Contact>, name: String, phoneNumber: String) {
-    contacts.add(Contact(name, phoneNumber))
-    Log.d("list", contacts.toString())
 }
 
 @Composable
